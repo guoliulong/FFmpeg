@@ -35,7 +35,7 @@ int main()
 	FILE *fp_yuv;
 	int ret, got_picture;
 	//char filepath[] = "C:\\¼«ÀÖ¾»ÍÁ 1080p(1).mp4";
-	char filepath[] = "G:\\EP18.mp4";
+	char filepath[] = "G:\\2015-04-28 213626.mov";
 
 	av_register_all();
 	avformat_network_init();
@@ -97,13 +97,15 @@ int main()
 		pCodecCtx->pix_fmt,
 		pCodecCtx->width,
 		pCodecCtx->height,
-		AV_PIX_FMT_RGB24,
+		AV_PIX_FMT_BGRA,
 		SWS_SINC,
 		NULL,
 		NULL,
 		NULL
 	);
-
+	int			buffer_size = av_image_get_buffer_size(AV_PIX_FMT_BGRA, pCodecCtx->width, pCodecCtx->height, 1);
+	uint8_t*	buff = (uint8_t *)av_malloc(buffer_size);
+	av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, buff, AV_PIX_FMT_BGRA, pCodecCtx->width, pCodecCtx->height, 1);
 	// Read frames and save first five frames to disk
 	i = 0;
 	while (av_read_frame(pFormatCtx, &packet) >= 0)
@@ -149,59 +151,30 @@ int main()
 			}
 
 			static int count = 0;
+			static int startTime = GetTickCount();
 			count++;
 
-			if (ret == 0)
-			{
-				//printf("%d\n", count);
-			}
-
-			int			buffer_size = av_image_get_buffer_size(AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
-			uint8_t*	buff = (uint8_t *)av_malloc(buffer_size);
-			av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, buff, AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
-
+			printf("%f\n", count/((GetTickCount() -startTime )/1000.0));
+			
 			sws_scale(sws_ctx, pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
 
 			//SaveAsBMP(pFrameRGB, pCodecCtx->width, pCodecCtx->height, 0, 24);
-			
-			uint8_t*	buff32 = (uint8_t *)av_malloc(buffer_size/3*4);
-
-			for (int y = 0; y < pCodecCtx->height; y++)
-			{
-				for (int x = 0; x < pCodecCtx->width; x++)
-				{
-					int index = (pCodecCtx->width * y + x) * 3;
-					int index32 = (pCodecCtx->width * y + x) * 4;
-					uint8_t* ppixel = pFrameRGB->data[0];
-
-					buff32[index32+2] = ppixel[index];
-					buff32[index32+1] = ppixel[index+1];
-					buff32[index32] = ppixel[index+2];
-					//buff32[index32 + 3] = 255;
-				}
-			}
-
 
 			HWND hwnd =		::GetDesktopWindow();
 			HDC hdc =		::GetDC(hwnd);
 			HDC memDc =		::CreateCompatibleDC(hdc);
-			HBRUSH brush =	::CreateSolidBrush(RGB(0, 255, 0));
-			HBITMAP bitmap = ::CreateBitmap(pCodecCtx->width, pCodecCtx->height, 1, 32, buff32);
+			HBITMAP bitmap = ::CreateBitmap(pCodecCtx->width, pCodecCtx->height, 1, 32, buff);
 			::SelectObject(memDc, bitmap);
 			
-
 			::StretchBlt(hdc, 0, 0, pCodecCtx->width, pCodecCtx->height, memDc, 0, 0, pCodecCtx->width, pCodecCtx->height, SRCCOPY);
 
-			::DeleteObject(brush);
 			::DeleteObject(bitmap);
 			::DeleteObject(memDc);
-
-			av_free(buff);
-			av_free(buff32);
+			
 		}
 	}
 
-
+	av_free(buff);
 
 	return 0;
 }
