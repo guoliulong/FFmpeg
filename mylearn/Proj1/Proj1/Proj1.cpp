@@ -35,7 +35,7 @@ int main()
 	FILE *fp_yuv;
 	int ret, got_picture;
 	//char filepath[] = "C:\\¼«ÀÖ¾»ÍÁ 1080p(1).mp4";
-	char filepath[] = "C:\\KK_Movies\\kk 2017-02-03 18-21-33.mp4";
+	char filepath[] = "G:\\EP18.mp4";
 
 	av_register_all();
 	avformat_network_init();
@@ -125,6 +125,7 @@ int main()
 			{
 				if (AVERROR(EAGAIN) == ret)
 				{
+					printf("AVERROR(EAGAIN)");
 					continue;
 				}
 
@@ -144,13 +145,15 @@ int main()
 				printf("AVERROR(EINVAL)");
 				break;
 			case 0:
-				printf("One Frame");
 				break;
 			}
 
+			static int count = 0;
+			count++;
+
 			if (ret == 0)
 			{
-				printf("%d", pFrame->width);
+				//printf("%d\n", count);
 			}
 
 			int			buffer_size = av_image_get_buffer_size(AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
@@ -171,9 +174,9 @@ int main()
 					int index32 = (pCodecCtx->width * y + x) * 4;
 					uint8_t* ppixel = pFrameRGB->data[0];
 
-					buff32[index32] = ppixel[index];
+					buff32[index32+2] = ppixel[index];
 					buff32[index32+1] = ppixel[index+1];
-					buff32[index32+2] = ppixel[index+2];
+					buff32[index32] = ppixel[index+2];
 					//buff32[index32 + 3] = 255;
 				}
 			}
@@ -195,42 +198,6 @@ int main()
 
 			av_free(buff);
 			av_free(buff32);
-
-
-
-			//saveBmp("a.bmp", pFrameRGB->data[0], pCodecCtx->width, pCodecCtx->height, 24, NULL);
-
-			//free(buff);
-
-			//avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
-
-			// Did we get a video frame?
-			//if (frameFinished)
-			//{
-			//SDL_LockYUVOverlay(bmp);
-
-			//AVPicture pict;
-			//pict.data[0] = bmp->pixels[0];
-			//pict.data[1] = bmp->pixels[2];
-			//pict.data[2] = bmp->pixels[1];
-
-			//pict.linesize[0] = bmp->pitches[0];
-			//pict.linesize[1] = bmp->pitches[2];
-			//pict.linesize[2] = bmp->pitches[1];
-
-			//// Convert the image into YUV format that SDL uses
-			//sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data,
-			//	pFrame->linesize, 0, pCodecCtx->height,
-			//	pict.data, pict.linesize);
-
-			//SDL_UnlockYUVOverlay(bmp);
-			//rect.x = 0;
-			//rect.y = 0;
-			//rect.w = pCodecCtx->width;
-			//rect.h = pCodecCtx->height;
-			//SDL_DisplayYUVOverlay(bmp, &rect);
-
-			//}
 		}
 	}
 
