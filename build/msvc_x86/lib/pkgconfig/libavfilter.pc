@@ -1,0 +1,14 @@
+prefix=/E/ffmpeg.git/out/msvc
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: libavfilter
+Description: FFmpeg audio/video filtering library
+Version: 6.63.100
+Requires: 
+Requires.private: libswscale >= 4.1.100, libavformat >= 57.51.107, libavcodec >= 57.61.102, libswresample >= 2.2.100, libavutil >= 55.32.100
+Conflicts:
+Libs: -L${libdir}  -lavfilter 
+Libs.private: ws2_32.lib vfw32.lib user32.lib gdi32.lib psapi.lib ole32.lib strmiids.lib uuid.lib oleaut32.lib shlwapi.lib secur32.lib psapi.lib advapi32.lib shell32.lib
+Cflags: -I${includedir}
