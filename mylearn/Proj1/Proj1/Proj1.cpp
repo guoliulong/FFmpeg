@@ -80,15 +80,21 @@ int main(int argc, char* args[])
 			SDL_AudioSpec aSpec,retSpec;
 			aSpec.callback = NULL;
 			aSpec.channels = 2;
-			aSpec.format = AUDIO_S16;
-			aSpec.freq = 441000;
+			aSpec.format = AUDIO_U8;
+			aSpec.freq = 44100;
 			aSpec.padding = 0;
-			aSpec.samples = 1024 * 8;
+			aSpec.samples = 0;
 			aSpec.silence = 0;
-			aSpec.size = 1024 * 8;
+			aSpec.size = 0;
 			aSpec.userdata = NULL;
 
-			SDL_AudioDeviceID audioDevID = SDL_OpenAudioDevice(NULL, 0, &aSpec, &retSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+			if (SDL_OpenAudio(&aSpec, &retSpec) !=0)
+			{
+				printf("Open audio failed");
+				return -1;
+			}
+
+			SDL_PauseAudio(0);
 
 			void* sampleBuffer = malloc(retSpec.size);
 
@@ -111,17 +117,24 @@ int main(int argc, char* args[])
 				}
 				else
 				{
-					if (audioDevID != 0)
+					if (true)
 					{
-						m_audio_data_buffer.Append(newFrame->data[0], newFrame->linesize[0]);
+						//m_audio_data_buffer.Append(newFrame->data[0], newFrame->linesize[0]);
 
-						if (m_audio_data_buffer.GetSize() >= retSpec.size)
+						//if (m_audio_data_buffer.GetSize() >= retSpec.size)
 						{
-							m_audio_data_buffer.ReadFront(sampleBuffer, retSpec.size);
-							if (SDL_QueueAudio(audioDevID, sampleBuffer, retSpec.size) == 0)
+							//m_audio_data_buffer.ReadFront(sampleBuffer, retSpec.size);
+
+							static int i = 0;
+
+							//if(i ==0)
+							//if (SDL_QueueAudio(1, sampleBuffer, retSpec.size) == -1)
+							if (SDL_QueueAudio(1, newFrame->data[0], newFrame->nb_samples*2) == -1) //newFrame->linesize[0]
 							{
 								printf("SDL_QueueAudio error");
 							}
+
+							++i;
 						}
 					}
 				}

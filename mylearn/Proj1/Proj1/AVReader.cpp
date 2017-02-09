@@ -1,5 +1,14 @@
 #include "avreader.h"
 
+
+static char err_buf[128] = { 0 };
+static char* av_get_err(int errnum)
+{
+	av_strerror(errnum, err_buf, 128);
+	return err_buf;
+}
+
+
 AVReader::AVReader(char* filePath)
 {
 	m_filePath = filePath;
@@ -94,8 +103,8 @@ bool AVReader::init()
 	m_swr_ctx = swr_alloc_set_opts(
 		NULL,
 		AV_CH_LAYOUT_STEREO,
-		AV_SAMPLE_FMT_S16, 
-		441000,
+		AV_SAMPLE_FMT_U8,
+		44100,
 		m_pAudioCodecParams->channel_layout,
 		(AVSampleFormat)m_pAudioCodecParams->format,
 		m_pAudioCodecParams->sample_rate,
@@ -108,6 +117,11 @@ bool AVReader::init()
 		printf("swr error .\n");
 		return -1;
 	}
+
+	m_pFrameAudio = av_frame_alloc();
+	m_pFrameAudio->format = AV_SAMPLE_FMT_U8;
+	m_pFrameAudio->sample_rate = 44100;
+	m_pFrameAudio->channel_layout = AV_CH_LAYOUT_STEREO;
 
 	// Allocate video frame
 	pFrame = av_frame_alloc();
@@ -172,9 +186,13 @@ AVFrame* AVReader::receiveFrame()
 			case 0:
 				break;
 			}
-			swr_convert_frame(m_swr_ctx, pFrame, pFrameRGB);
-			pFrameRGB->nb_samples = pFrame->nb_samples;
-			return pFrameRGB;
+			
+			if (ret=swr_convert_frame(m_swr_ctx, m_pFrameAudio, pFrame) != 0)
+			{
+				printf("swr_convert_frame failed %s", av_get_err(ret));
+			}
+
+			return m_pFrameAudio;
 		}
 		//video
 		if (packet.stream_index == videoindex)

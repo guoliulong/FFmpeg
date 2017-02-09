@@ -16,7 +16,7 @@ private:
 	AVCodecParameters  *m_pAudioCodecParams;
 	AVCodec         *m_pVideoCodec;
 	AVCodec         *m_pAudioCodec;
-	AVFrame *pFrame, *pFrameRGB;
+	AVFrame *pFrame, *pFrameRGB,*m_pFrameAudio;
 	AVPacket packet;
 	int ret;
 	char* m_filePath;// = "C:\\¼«ÀÖ¾»ÍÁ 1080p(1).mp4";
