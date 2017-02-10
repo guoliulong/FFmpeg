@@ -23,7 +23,7 @@ AVReader::~AVReader()
 }
 
 
-bool AVReader::init()
+int AVReader::init()
 {
 	av_register_all();
 	avformat_network_init();
@@ -44,7 +44,7 @@ bool AVReader::init()
 
 	videoindex = -1;
 	audioindex = -1;
-	for (i = 0; i<pFormatCtx->nb_streams; i++)
+	for (uint32_t i = 0; i<pFormatCtx->nb_streams; i++)
 	{
 		if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
 		{
@@ -58,20 +58,20 @@ bool AVReader::init()
 	if (videoindex == -1) 
 	{
 		printf("Didn't find a video stream.\n");
-		return false;
+		return -1;
 	}
 
 	if (audioindex == -1)
 	{
 		printf("Didn't find a audio stream.\n");
-		return false;
+		return -1;
 	}
 	//vedio
 	m_pVideoCodecParams = pFormatCtx->streams[videoindex]->codecpar;
 	m_pVideoCodec = avcodec_find_decoder(m_pVideoCodecParams->codec_id);
 	if (m_pVideoCodec == NULL) {
 		printf("VCodec not found.\n");
-		return false;
+		return -1;
 	}
 	m_pVideoCodecCtx = avcodec_alloc_context3(m_pVideoCodec);
 	if (avcodec_parameters_to_context(m_pVideoCodecCtx, m_pVideoCodecParams) != 0)
@@ -88,7 +88,7 @@ bool AVReader::init()
 	m_pAudioCodec = avcodec_find_decoder(m_pAudioCodecParams->codec_id);
 	if (m_pAudioCodec == NULL) {
 		printf("ACodec not found.\n");
-		return false;
+		return -1;
 	}
 	m_pAudioCodecCtx = avcodec_alloc_context3(m_pAudioCodec);
 	if (avcodec_parameters_to_context(m_pAudioCodecCtx, m_pAudioCodecParams) != 0)
@@ -143,7 +143,8 @@ bool AVReader::init()
 	uint8_t*	buff = (uint8_t *)av_malloc(buffer_size);
 	av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, buff, AV_PIX_FMT_RGB24, m_pVideoCodecCtx->width, m_pVideoCodecCtx->height, 1);
 	// Read frames and save first five frames to disk
-	i = 0;
+
+	return 0;
 }
 
 AVFrame* AVReader::receiveFrame()

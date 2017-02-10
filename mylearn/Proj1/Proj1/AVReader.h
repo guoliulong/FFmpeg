@@ -11,7 +11,7 @@ class AVReader
 {
 private:
 	AVFormatContext *pFormatCtx;
-	int             i, videoindex, audioindex;
+	int            videoindex, audioindex;
 	AVCodecParameters  *m_pVideoCodecParams;
 	AVCodecParameters  *m_pAudioCodecParams;
 	AVCodec         *m_pVideoCodec;
@@ -27,6 +27,6 @@ private:
 public:
 	AVReader(char* filePath);
 	~AVReader();
-	bool init();
+	int init();
 	AVFrame* receiveFrame();
 };
