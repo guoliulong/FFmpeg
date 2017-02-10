@@ -59,7 +59,8 @@ int main(int argc, char* args[])
 			//SDL_UpdateWindowSurface(window);
 
 			//read mp4
-			avReader = new AVReader("C:\\EP01.mp4");
+			//avReader = new AVReader("C:\\EP01.mp4");
+			avReader = new AVReader("E:\\KwDownload\\song\\衡越-谁是我的新娘(《乡村爱情》内地剧片尾曲).mp3");
 			avReader->init();
 			AVFrame* newFrame = avReader->receiveFrame();
 			
@@ -96,7 +97,7 @@ int main(int argc, char* args[])
 
 			SDL_PauseAudio(0);
 
-			void* sampleBuffer = malloc(retSpec.size);
+			//void* sampleBuffer = malloc(retSpec.size);
 
 			int ret;
 			SDL_Event event;

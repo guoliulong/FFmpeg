@@ -154,12 +154,14 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AVPlayer.h" />
     <ClInclude Include="AVReader.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="XAVDataBuffer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AVPlayer.cpp" />
     <ClCompile Include="AVReader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>

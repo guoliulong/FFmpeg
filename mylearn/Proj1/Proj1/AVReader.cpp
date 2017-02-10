@@ -159,7 +159,7 @@ AVFrame* AVReader::receiveFrame()
 				av_packet_unref(&packet);
 				return 0;
 			}
-			//从解码器返回解码输出数据  
+			//从解码器返回解码输出数据
 			ret = avcodec_receive_frame(m_pAudioCodecCtx, pFrame);
 			if (ret < 0 && ret != AVERROR_EOF)
 			{
