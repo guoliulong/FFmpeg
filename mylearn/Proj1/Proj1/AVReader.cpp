@@ -16,10 +16,10 @@ AVReader::AVReader(char* filePath)
 
 AVReader::~AVReader()
 {
-	if (pFrame)
+	/*if (pFrame)
 		av_frame_free(&pFrame);
 	if (pFrameRGB)
-		av_frame_free(&pFrameRGB);
+		av_frame_free(&pFrameRGB);*/
 }
 
 
@@ -118,14 +118,14 @@ int AVReader::init()
 		return -1;
 	}
 
-	m_pFrameAudio = av_frame_alloc();
-	m_pFrameAudio->format = AV_SAMPLE_FMT_U8;
-	m_pFrameAudio->sample_rate = 44100;
-	m_pFrameAudio->channel_layout = AV_CH_LAYOUT_STEREO;
+	//m_pFrameAudio = av_frame_alloc();
+	//m_pFrameAudio->format = AV_SAMPLE_FMT_U8;
+	//m_pFrameAudio->sample_rate = 44100;
+	//m_pFrameAudio->channel_layout = AV_CH_LAYOUT_STEREO;
 
-	// Allocate video frame
-	pFrame = av_frame_alloc();
-	pFrameRGB = av_frame_alloc();
+	//// Allocate video frame
+	//pFrame = av_frame_alloc();
+	//pFrameRGB = av_frame_alloc();
 
 	// initialize SWS context for software scaling
 	sws_ctx = sws_getContext(m_pVideoCodecCtx->width,
@@ -139,12 +139,79 @@ int AVReader::init()
 		NULL,
 		NULL
 	);
-	int32_t			buffer_size = av_image_get_buffer_size(AV_PIX_FMT_RGB24, m_pVideoCodecCtx->width, m_pVideoCodecCtx->height, 1);
-	uint8_t*	buff = (uint8_t *)av_malloc(buffer_size);
-	av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, buff, AV_PIX_FMT_RGB24, m_pVideoCodecCtx->width, m_pVideoCodecCtx->height, 1);
+	//int32_t			buffer_size = av_image_get_buffer_size(AV_PIX_FMT_RGB24, m_pVideoCodecCtx->width, m_pVideoCodecCtx->height, 1);
+	//uint8_t*	buff = (uint8_t *)av_malloc(buffer_size);
+	//av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, buff, AV_PIX_FMT_RGB24, m_pVideoCodecCtx->width, m_pVideoCodecCtx->height, 1);
 	// Read frames and save first five frames to disk
 
 	return 0;
+}
+
+AVFrame * AVReader::receiveFrame(AV_TYPE t)
+{
+	switch (t)
+	{
+	case AT_AUDIO:
+	{
+		if (!m_pAudioCodecCtx)
+			return nullptr;
+
+		if (m_AudioBuffer.size() > 0)
+		{
+			AVFrame * ret = m_AudioBuffer.back();
+			m_AudioBuffer.pop();
+			return ret;
+		}
+
+		AVFrame* avf = receiveFrame();
+		while(avf->nb_samples == 0)
+		{
+			m_VideoBuffer.push(av_frame_clone(avf));
+			avf = receiveFrame();
+		}
+			
+		return avf;
+		
+	}
+	break;
+	case AT_VIDEO:
+		if (!m_pVideoCodecCtx)
+			return nullptr;
+
+		if (m_VideoBuffer.size() > 0)
+		{
+			AVFrame * ret = m_VideoBuffer.back();
+			m_VideoBuffer.pop();
+			return ret;
+		}
+		AVFrame* avf = receiveFrame();
+		while (avf->nb_samples != 0)
+		{
+			m_AudioBuffer.push(av_frame_clone(avf));
+			avf = receiveFrame();
+		}
+		return avf;
+		
+		break;
+	}
+
+	return nullptr;
+}
+
+void AVReader::convertVideo(AVFrame * dst, AVFrame * src)
+{
+	sws_scale(sws_ctx, src->data, src->linesize, 0, m_pVideoCodecCtx->height, dst->data, dst->linesize);
+	dst->width = src->width;
+	dst->height = src->height;
+	dst->nb_samples = src->nb_samples;
+}
+
+void AVReader::convertAudio(AVFrame * dst, AVFrame * src)
+{
+	if (ret=swr_convert_frame(m_swr_ctx, dst, src) != 0)
+	{
+		printf("swr_convert_frame failed %s", av_get_err(ret));
+	}
 }
 
 AVFrame* AVReader::receiveFrame()
@@ -161,12 +228,13 @@ AVFrame* AVReader::receiveFrame()
 				return 0;
 			}
 			//从解码器返回解码输出数据
-			ret = avcodec_receive_frame(m_pAudioCodecCtx, pFrame);
+			AVFrame* newframe = av_frame_alloc();
+			ret = avcodec_receive_frame(m_pAudioCodecCtx, newframe);
 			if (ret < 0 && ret != AVERROR_EOF)
 			{
 				if (AVERROR(EAGAIN) == ret)
 				{
-					printf("AVERROR(EAGAIN)");
+					av_frame_free(&newframe);
 					continue;
 				}
 				av_packet_unref(&packet);
@@ -187,13 +255,8 @@ AVFrame* AVReader::receiveFrame()
 			case 0:
 				break;
 			}
-			
-			if (ret=swr_convert_frame(m_swr_ctx, m_pFrameAudio, pFrame) != 0)
-			{
-				printf("swr_convert_frame failed %s", av_get_err(ret));
-			}
 
-			return m_pFrameAudio;
+			return newframe;
 		}
 		//video
 		if (packet.stream_index == videoindex)
@@ -205,12 +268,13 @@ AVFrame* AVReader::receiveFrame()
 				return 0;
 			}
 			//从解码器返回解码输出数据  
-			ret = avcodec_receive_frame(m_pVideoCodecCtx, pFrame);
+			AVFrame* newframe = av_frame_alloc();
+			ret = avcodec_receive_frame(m_pVideoCodecCtx, newframe);
 			if (ret < 0 && ret != AVERROR_EOF)
 			{
 				if (AVERROR(EAGAIN) == ret)
 				{
-					printf("AVERROR(EAGAIN)");
+					av_frame_free(&newframe);
 					continue;
 				}
 
@@ -232,11 +296,7 @@ AVFrame* AVReader::receiveFrame()
 			case 0:
 				break;
 			}
-			sws_scale(sws_ctx, pFrame->data, pFrame->linesize, 0, m_pVideoCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
-			pFrameRGB->width = pFrame->width;
-			pFrameRGB->height = pFrame->height;
-			pFrameRGB->nb_samples = pFrame->nb_samples;
-			return pFrameRGB;
+			return newframe;
 		}
 	}
 

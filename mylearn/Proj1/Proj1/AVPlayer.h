@@ -11,6 +11,9 @@ extern "C"
 };
 class AVPlayer
 {
+	
+
+
 private:
 	double m_Time; //milisecond
 	double m_VideoFps;
@@ -26,8 +29,15 @@ private:
 	SDL_Window * m_Window;
 	SDL_Renderer* m_Renderer;
 
+private:
+//	AVFrame * AllocVideoFrame();
+//	AVFrame * AllocAudioFrame();
+//	AVFrame * FetchFrame(AV_TYPE t);
+
 public:
 	int OpenVideo(std::string fpath);
+
+	int Tick();
 
 public:
 	AVPlayer(SDL_Window * window);

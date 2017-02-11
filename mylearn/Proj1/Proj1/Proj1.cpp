@@ -60,7 +60,7 @@ int main(int argc, char* args[])
 
 			//read mp4
 			//avReader = new AVReader("C:\\EP01.mp4");
-			avReader = new AVReader("E:\\KwDownload\\song\\衡越-谁是我的新娘(《乡村爱情》内地剧片尾曲).mp3");
+			avReader = new AVReader("G:\\愤怒的小鸟.BD1280超清英国台粤四语中英双字.mp4");
 			avReader->init();
 			AVFrame* newFrame = avReader->receiveFrame();
 			
