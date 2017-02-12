@@ -15,7 +15,7 @@
 
 int AVPlayer::OpenVideo(std::string fpath)
 {
-	m_AVReader = new AVReader("G:\\愤怒的小鸟.BD1280超清英国台粤四语中英双字.mp4");
+	m_AVReader = new AVReader(fpath.c_str());
 	m_AVReader->init();
 	//AVFrame* newFrame = m_AVReader->receiveFrame();
 
@@ -67,6 +67,10 @@ int AVPlayer::Tick()
 		}
 		av_frame_free(&pcmFrame);
 		av_frame_free(&rawFrame);
+	}
+	else
+	{
+		printf("so muth speed");
 	}
 
 	return 0;

@@ -49,7 +49,7 @@ int main(int argc, char* args[])
 			
 
 			AVPlayer player(window);
-			player.OpenVideo("G:\\愤怒的小鸟.BD1280超清英国台粤四语中英双字.mp4");
+			player.OpenVideo("G:\\EP09.mp4");
 			SDL_Event event;
 			//Wait two seconds
 			while (1)

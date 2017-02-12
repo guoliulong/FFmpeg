@@ -1,5 +1,5 @@
 #include "avreader.h"
-
+#include <assert.h>
 
 static char err_buf[128] = { 0 };
 static char* av_get_err(int errnum)
@@ -9,7 +9,7 @@ static char* av_get_err(int errnum)
 }
 
 
-AVReader::AVReader(char* filePath)
+AVReader::AVReader(const char* filePath)
 {
 	m_filePath = filePath;
 }
@@ -208,6 +208,28 @@ void AVReader::convertVideo(AVFrame * dst, AVFrame * src)
 
 void AVReader::convertAudio(AVFrame * dst, AVFrame * src)
 {
+	int ret = swr_get_out_samples(m_swr_ctx, src->nb_samples);
+	// Input and output AVFrames must have channel_layout, sample_rate and format set.
+	dst->sample_rate = 44100;
+	dst->channel_layout = AV_CH_LAYOUT_STEREO;
+	dst->format = AV_SAMPLE_FMT_U8;
+	dst->channels = 2;
+
+	ret *= 2;
+
+	if (ret > dst->pkt_size)
+	{
+		if (dst->data[0])
+		{
+			dst->data[0] = (uint8_t*)realloc(dst->data[0], ret);
+		}
+		else
+		{
+			dst->data[0] = (uint8_t*)malloc(ret);
+		}
+		dst->pkt_size = ret;
+	}
+
 	if (ret=swr_convert_frame(m_swr_ctx, dst, src) != 0)
 	{
 		printf("swr_convert_frame failed %s", av_get_err(ret));

@@ -30,7 +30,7 @@ private:
 	//AVFrame *pFrame, *pFrameRGB,*m_pFrameAudio;
 	AVPacket packet;
 	int ret;
-	char* m_filePath;// = "C:\\极乐净土 1080p(1).mp4";
+	const char* m_filePath;// = "C:\\极乐净土 1080p(1).mp4";
 	SwsContext* sws_ctx;
 	SwrContext* m_swr_ctx;
 	AVCodecContext* m_pVideoCodecCtx;
@@ -44,7 +44,7 @@ private:
 	AVFrame* receiveFrame();
 
 public:
-	AVReader(char* filePath);
+	AVReader(const char* filePath);
 	~AVReader();
 	int init();
 	AVFrame* receiveFrame(AV_TYPE t);
