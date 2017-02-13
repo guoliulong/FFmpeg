@@ -59,8 +59,8 @@ int main(int argc, char* args[])
 			//SDL_UpdateWindowSurface(window);
 
 			//read mp4
-			//avReader = new AVReader("C:\\EP01.mp4");
-			avReader = new AVReader("G:\\愤怒的小鸟.BD1280超清英国台粤四语中英双字.mp4");
+			avReader = new AVReader("C:\\EP01.mp4");
+			//avReader = new AVReader("G:\\愤怒的小鸟.BD1280超清英国台粤四语中英双字.mp4");
 			avReader->init();
 			AVFrame* newFrame = avReader->receiveFrame();
 			

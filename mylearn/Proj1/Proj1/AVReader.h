@@ -48,6 +48,8 @@ public:
 	~AVReader();
 	int init();
 	AVFrame* receiveFrame(AV_TYPE t);
+	AVFrame* pickNextFrame(AV_TYPE t);
+
 	void convertVideo(AVFrame* dst, AVFrame* src);
 	void convertAudio(AVFrame* dst, AVFrame* src);
 

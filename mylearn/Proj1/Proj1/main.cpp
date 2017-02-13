@@ -49,7 +49,7 @@ int main(int argc, char* args[])
 			
 
 			AVPlayer player(window);
-			player.OpenVideo("G:\\EP09.mp4");
+			player.OpenVideo("C:\\EP01.mp4");
 			SDL_Event event;
 			//Wait two seconds
 			while (1)

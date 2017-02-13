@@ -147,6 +147,12 @@ int AVReader::init()
 	return 0;
 }
 
+
+
+
+
+
+
 AVFrame * AVReader::receiveFrame(AV_TYPE t)
 {
 	switch (t)
@@ -166,7 +172,7 @@ AVFrame * AVReader::receiveFrame(AV_TYPE t)
 		AVFrame* avf = receiveFrame();
 		while(avf->nb_samples == 0)
 		{
-			m_VideoBuffer.push(av_frame_clone(avf));
+			m_VideoBuffer.push(avf);
 			avf = receiveFrame();
 		}
 			
@@ -187,7 +193,7 @@ AVFrame * AVReader::receiveFrame(AV_TYPE t)
 		AVFrame* avf = receiveFrame();
 		while (avf->nb_samples != 0)
 		{
-			m_AudioBuffer.push(av_frame_clone(avf));
+			m_AudioBuffer.push(avf);
 			avf = receiveFrame();
 		}
 		return avf;
@@ -198,8 +204,62 @@ AVFrame * AVReader::receiveFrame(AV_TYPE t)
 	return nullptr;
 }
 
+AVFrame * AVReader::pickNextFrame(AV_TYPE t)
+{
+	switch (t)
+	{
+	case AT_AUDIO:
+	{
+		if (!m_pAudioCodecCtx)
+			return nullptr;
+
+		if (m_AudioBuffer.size() > 0)
+		{
+			AVFrame * ret = m_AudioBuffer.back();
+			return ret;
+		}
+
+		AVFrame* avf = receiveFrame();
+		while (avf->nb_samples == 0)
+		{
+			m_VideoBuffer.push(avf);
+			avf = receiveFrame();
+		}
+
+		m_AudioBuffer.push(avf);
+
+		return avf;
+
+	}
+	break;
+	case AT_VIDEO:
+		if (!m_pVideoCodecCtx)
+			return nullptr;
+
+		if (m_VideoBuffer.size() > 0)
+		{
+			AVFrame * ret = m_VideoBuffer.back();
+			return ret;
+		}
+		AVFrame* avf = receiveFrame();
+		while (avf->nb_samples != 0)
+		{
+			m_AudioBuffer.push(avf);
+			avf = receiveFrame();
+		}
+		m_VideoBuffer.push(avf);
+		return avf;
+
+		break;
+	}
+
+	return nullptr;
+}
+
 void AVReader::convertVideo(AVFrame * dst, AVFrame * src)
 {
+	dst->linesize[0] = m_pVideoCodecCtx->width * 3;
+	dst->data[0] = (uint8_t*)malloc(m_pVideoCodecCtx->height * m_pVideoCodecCtx->width * 3);
 	sws_scale(sws_ctx, src->data, src->linesize, 0, m_pVideoCodecCtx->height, dst->data, dst->linesize);
 	dst->width = src->width;
 	dst->height = src->height;
@@ -208,27 +268,27 @@ void AVReader::convertVideo(AVFrame * dst, AVFrame * src)
 
 void AVReader::convertAudio(AVFrame * dst, AVFrame * src)
 {
-	int ret = swr_get_out_samples(m_swr_ctx, src->nb_samples);
+	int ret;// = swr_get_out_samples(m_swr_ctx, src->nb_samples);
 	// Input and output AVFrames must have channel_layout, sample_rate and format set.
 	dst->sample_rate = 44100;
 	dst->channel_layout = AV_CH_LAYOUT_STEREO;
 	dst->format = AV_SAMPLE_FMT_U8;
-	dst->channels = 2;
+	//dst->channels = 2;
 
-	ret *= 2;
+	//ret *= 2;
 
-	if (ret > dst->pkt_size)
-	{
-		if (dst->data[0])
-		{
-			dst->data[0] = (uint8_t*)realloc(dst->data[0], ret);
-		}
-		else
-		{
-			dst->data[0] = (uint8_t*)malloc(ret);
-		}
-		dst->pkt_size = ret;
-	}
+	//if (ret > dst->pkt_size)
+	//{
+	//	if (dst->data[0])
+	//	{
+	//		//dst->data[0] = (uint8_t*)realloc(dst->data[0], ret);
+	//	}
+	//	else
+	//	{
+	//		//dst->data[0] = (uint8_t*)malloc(ret);
+	//	}
+	//	//dst->pkt_size = ret;
+	//}
 
 	if (ret=swr_convert_frame(m_swr_ctx, dst, src) != 0)
 	{

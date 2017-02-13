@@ -28,6 +28,8 @@ private:
 	//win
 	SDL_Window * m_Window;
 	SDL_Renderer* m_Renderer;
+	SDL_Texture* m_VideoTexture;
+	SDL_Rect m_RectVideo;
 
 private:
 //	AVFrame * AllocVideoFrame();

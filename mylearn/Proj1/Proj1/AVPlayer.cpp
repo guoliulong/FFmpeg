@@ -17,14 +17,19 @@ int AVPlayer::OpenVideo(std::string fpath)
 {
 	m_AVReader = new AVReader(fpath.c_str());
 	m_AVReader->init();
-	//AVFrame* newFrame = m_AVReader->receiveFrame();
 
-	SDL_Texture * texture = SDL_CreateTexture(m_Renderer,
+	m_VideoTexture = SDL_CreateTexture(m_Renderer,
 		SDL_PIXELFORMAT_RGB24, 
 		SDL_TEXTUREACCESS_STREAMING,
 		m_AVReader->getWidth(),
 		m_AVReader->getHeight());
-	
+	SDL_assert(m_VideoTexture);
+
+	m_RectVideo.h = m_AVReader->getHeight();
+	m_RectVideo.w = m_AVReader->getWidth();
+	m_RectVideo.x = 0;
+	m_RectVideo.y = 0;
+
 	//auido
 	SDL_AudioSpec aSpec, retSpec;
 	aSpec.callback = NULL;
@@ -53,24 +58,51 @@ int AVPlayer::OpenVideo(std::string fpath)
 
 int AVPlayer::Tick()
 {
-	uint32_t qas = SDL_GetQueuedAudioSize(1);
-
-	if (qas < 1)
+	int startT = ::SDL_GetTicks();
+	//uint32_t qas = SDL_GetQueuedAudioSize(1);
+	//printf("%d\n", qas);
+	//if (qas < 4410 )
 	{
 		AVFrame* pcmFrame = av_frame_alloc();
 		AVFrame* rawFrame = m_AVReader->receiveFrame(AVReader::AT_AUDIO);
 		m_AVReader->convertAudio(pcmFrame, rawFrame);
 		
-		if (SDL_QueueAudio(1, pcmFrame->data[0], pcmFrame->nb_samples * 2) == -1) //newFrame->linesize[0]
+		if (SDL_QueueAudio(1, pcmFrame->data[0], pcmFrame->nb_samples*2) == -1) //
 		{
 			printf("SDL_QueueAudio error");
 		}
+
+		m_Time = rawFrame->pts;
+
 		av_frame_free(&pcmFrame);
 		av_frame_free(&rawFrame);
+
+		//printf("%f\n", m_Time);
+		//printf("%d\n", ::SDL_GetTicks() - startT);
+		//printf("%d\n" , qas);
 	}
-	else
+	//else
 	{
-		printf("so muth speed");
+		//printf("so muth speed");
+	}
+
+	//video
+	AVFrame* pickFrame = m_AVReader->pickNextFrame(AVReader::AT_VIDEO);
+	if (pickFrame->pts < m_Time)
+	{
+		AVFrame* rgbFrame = av_frame_alloc();
+		AVFrame* yuvFrame = m_AVReader->receiveFrame(AVReader::AT_VIDEO);
+		m_AVReader->convertVideo(rgbFrame, yuvFrame);
+
+		SDL_assert(SDL_UpdateTexture(m_VideoTexture, &m_RectVideo, rgbFrame->data[0], yuvFrame->width * 3) == 0);
+		SDL_Rect dstRect;
+		memset(&dstRect, 0, sizeof(SDL_Rect));
+		SDL_GetRendererOutputSize(m_Renderer, &dstRect.w, &dstRect.h);
+		SDL_RenderCopy(m_Renderer, m_VideoTexture, &m_RectVideo, &dstRect);
+		SDL_RenderPresent(m_Renderer);
+
+		av_frame_free(&rgbFrame);
+		av_frame_free(&yuvFrame);
 	}
 
 	return 0;
