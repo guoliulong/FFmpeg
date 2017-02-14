@@ -16,6 +16,16 @@ const int SCREEN_HEIGHT = 240;
 
 int main(int argc, char* args[])
 {
+	//test
+	//_CrtDumpMemoryLeaks();
+	//AVFrame* pcmFrame = av_frame_alloc();
+	//pcmFrame->data[8] = (uint8_t*)malloc(10);
+	//av_frame_free(&pcmFrame);
+
+	//_CrtDumpMemoryLeaks();
+
+
+
 	//The window we'll be rendering to
 	SDL_Window* window = NULL;
 
@@ -25,7 +35,7 @@ int main(int argc, char* args[])
 
 	AVReader* avReader;
 
-	XAVDataBuffer m_audio_data_buffer(1024 * 8);
+	//XAVDataBuffer m_audio_data_buffer(1024 * 8);
 
 	//Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
@@ -49,7 +59,8 @@ int main(int argc, char* args[])
 			
 
 			AVPlayer player(window);
-			player.OpenVideo("C:\\EP01.mp4");
+			//player.OpenVideo("C:\\1.MOV");
+			player.OpenVideo("C:\\°¢À­¶¡.Aladdin.1992.HDTV.2Audio.MiniSD-TLF.mkv");
 			SDL_Event event;
 			//Wait two seconds
 			while (1)

@@ -33,6 +33,8 @@ private:
 	const char* m_filePath;// = "C:\\¼«ÀÖ¾»ÍÁ 1080p(1).mp4";
 	SwsContext* sws_ctx;
 	SwrContext* m_swr_ctx;
+	AVStream* m_pVideoStream;
+	AVStream* m_pAudioStream;
 	AVCodecContext* m_pVideoCodecCtx;
 	AVCodecContext* m_pAudioCodecCtx;
 
@@ -49,6 +51,7 @@ public:
 	int init();
 	AVFrame* receiveFrame(AV_TYPE t);
 	AVFrame* pickNextFrame(AV_TYPE t);
+	double getRealTime(AV_TYPE t, double pts);
 
 	void convertVideo(AVFrame* dst, AVFrame* src);
 	void convertAudio(AVFrame* dst, AVFrame* src);

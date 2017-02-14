@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "avreader.h"
 #include <assert.h>
 
@@ -66,8 +67,9 @@ int AVReader::init()
 		printf("Didn't find a audio stream.\n");
 		return -1;
 	}
-	//vedio
-	m_pVideoCodecParams = pFormatCtx->streams[videoindex]->codecpar;
+	//video
+	m_pVideoStream = pFormatCtx->streams[videoindex];
+	m_pVideoCodecParams = m_pVideoStream->codecpar;
 	m_pVideoCodec = avcodec_find_decoder(m_pVideoCodecParams->codec_id);
 	if (m_pVideoCodec == NULL) {
 		printf("VCodec not found.\n");
@@ -84,7 +86,8 @@ int AVReader::init()
 	}
 
 	//audio
-	m_pAudioCodecParams = pFormatCtx->streams[audioindex]->codecpar;
+	m_pAudioStream = pFormatCtx->streams[audioindex];
+	m_pAudioCodecParams = m_pAudioStream->codecpar;
 	m_pAudioCodec = avcodec_find_decoder(m_pAudioCodecParams->codec_id);
 	if (m_pAudioCodec == NULL) {
 		printf("ACodec not found.\n");
@@ -95,7 +98,7 @@ int AVReader::init()
 	{
 		return -1;
 	}
-	if (avcodec_open2(m_pAudioCodecCtx, m_pAudioCodec, nullptr)<0) {
+	if (avcodec_open2(m_pAudioCodecCtx, m_pAudioCodec, NULL)<0) {
 		printf("Could not open codec.\n");
 		return -1;
 	}
@@ -164,7 +167,7 @@ AVFrame * AVReader::receiveFrame(AV_TYPE t)
 
 		if (m_AudioBuffer.size() > 0)
 		{
-			AVFrame * ret = m_AudioBuffer.back();
+			AVFrame * ret = m_AudioBuffer.front();
 			m_AudioBuffer.pop();
 			return ret;
 		}
@@ -186,7 +189,7 @@ AVFrame * AVReader::receiveFrame(AV_TYPE t)
 
 		if (m_VideoBuffer.size() > 0)
 		{
-			AVFrame * ret = m_VideoBuffer.back();
+			AVFrame * ret = m_VideoBuffer.front();
 			m_VideoBuffer.pop();
 			return ret;
 		}
@@ -204,6 +207,10 @@ AVFrame * AVReader::receiveFrame(AV_TYPE t)
 	return nullptr;
 }
 
+
+
+
+
 AVFrame * AVReader::pickNextFrame(AV_TYPE t)
 {
 	switch (t)
@@ -215,7 +222,7 @@ AVFrame * AVReader::pickNextFrame(AV_TYPE t)
 
 		if (m_AudioBuffer.size() > 0)
 		{
-			AVFrame * ret = m_AudioBuffer.back();
+			AVFrame * ret = m_AudioBuffer.front();
 			return ret;
 		}
 
@@ -238,7 +245,7 @@ AVFrame * AVReader::pickNextFrame(AV_TYPE t)
 
 		if (m_VideoBuffer.size() > 0)
 		{
-			AVFrame * ret = m_VideoBuffer.back();
+			AVFrame * ret = m_VideoBuffer.front();
 			return ret;
 		}
 		AVFrame* avf = receiveFrame();
@@ -254,6 +261,17 @@ AVFrame * AVReader::pickNextFrame(AV_TYPE t)
 	}
 
 	return nullptr;
+}
+
+double AVReader::getRealTime(AV_TYPE t, double pts)
+{
+	if (t == AT_AUDIO)
+		return av_q2d(m_pAudioStream->time_base) * pts;
+	
+	if (t == AT_VIDEO)
+		return av_q2d(m_pVideoStream->time_base) * pts;
+
+	return -1;
 }
 
 void AVReader::convertVideo(AVFrame * dst, AVFrame * src)

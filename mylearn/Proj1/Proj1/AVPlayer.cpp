@@ -58,10 +58,9 @@ int AVPlayer::OpenVideo(std::string fpath)
 
 int AVPlayer::Tick()
 {
-	int startT = ::SDL_GetTicks();
-	//uint32_t qas = SDL_GetQueuedAudioSize(1);
-	//printf("%d\n", qas);
-	//if (qas < 4410 )
+	//int startT = ::SDL_GetTicks();
+	uint32_t qas = SDL_GetQueuedAudioSize(1);
+	if (qas < 4410 )
 	{
 		AVFrame* pcmFrame = av_frame_alloc();
 		AVFrame* rawFrame = m_AVReader->receiveFrame(AVReader::AT_AUDIO);
@@ -72,23 +71,25 @@ int AVPlayer::Tick()
 			printf("SDL_QueueAudio error");
 		}
 
-		m_Time = rawFrame->pts;
+		m_Time = m_AVReader->getRealTime(AVReader::AT_AUDIO, rawFrame->pts);
 
 		av_frame_free(&pcmFrame);
 		av_frame_free(&rawFrame);
 
-		//printf("%f\n", m_Time);
+		
 		//printf("%d\n", ::SDL_GetTicks() - startT);
 		//printf("%d\n" , qas);
 	}
-	//else
+	else
 	{
-		//printf("so muth speed");
+		//printf("so muth speed\n");
 	}
 
 	//video
 	AVFrame* pickFrame = m_AVReader->pickNextFrame(AVReader::AT_VIDEO);
-	if (pickFrame->pts < m_Time)
+	double VT = m_AVReader->getRealTime(AVReader::AT_VIDEO, pickFrame->pts);
+	printf("%f ---- %F\n", m_Time,VT);
+	if (VT < m_Time)
 	{
 		AVFrame* rgbFrame = av_frame_alloc();
 		AVFrame* yuvFrame = m_AVReader->receiveFrame(AVReader::AT_VIDEO);
@@ -101,9 +102,12 @@ int AVPlayer::Tick()
 		SDL_RenderCopy(m_Renderer, m_VideoTexture, &m_RectVideo, &dstRect);
 		SDL_RenderPresent(m_Renderer);
 
+		free(rgbFrame->data[0]);
 		av_frame_free(&rgbFrame);
 		av_frame_free(&yuvFrame);
 	}
+
+	//_CrtDumpMemoryLeaks();
 
 	return 0;
 }

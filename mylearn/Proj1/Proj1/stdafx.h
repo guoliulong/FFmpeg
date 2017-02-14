@@ -11,7 +11,8 @@
 #include <tchar.h>
 #include"XAVDataBuffer.h"
 
-
-
+#define _CRTDBG_MAP_ALLOC
+#include<stdlib.h>
+#include<crtdbg.h>
 
 // TODO: reference additional headers your program requires here
